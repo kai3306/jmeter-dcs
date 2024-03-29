@@ -1,0 +1,80 @@
+version: '3.9'
+services:
+  master:
+    build: 
+      context: .
+      dockerfile: Dockerfile-jmeter
+    image: jmeter-dcs:5.5      #构建镜像的名称和版本
+    command: master
+    container_name: jmeter-master # 容器名称
+    tty: true
+    ports:
+      - 60000
+    volumes:
+      - ./script:/jmeter/script
+      - ./report:/jmeter/report
+    networks:
+      - jmeter-network
+
+
+  slave:
+    image: jmeter-dcs:5.5
+    command: server
+    tty: true
+    expose:
+      - 50000
+      - 1099
+    networks:
+      - jmeter-network
+    depends_on:
+      - master
+
+
+  influxdb:
+    image: influxdb:1.8
+    container_name: jmeter-influxDB
+    expose:
+      - 8086
+    volumes:
+      - ./influxdb:/var/lib/influxdb 
+    networks:
+      - jmeter-network
+
+
+  grafana:
+    image: grafana/grafana
+    container_name: jmeter-grafana
+    environment: 
+      - GF_RENDERING_CORS_ALLOW_ORIGIN=*
+    expose:
+      - 3000
+    volumes:  
+      - ./grafana:/var/lib/grafana
+    networks:
+      - jmeter-network
+
+
+  nginx:
+    image: nginx:1.23.4
+    container_name: jmeter-nginx
+    ports:
+      - 3500:80
+      - 3600:81
+    volumes:
+      # 页面目录
+      - ./report:/usr/share/nginx/html
+      # 证书映射
+      # - /docker/nginx/cert:/etc/nginx/cert
+      # 配置文件映射
+      - ./nginx/conf/nginx.conf:/etc/nginx/nginx.conf
+      # 日志目录
+      - ./nginx/log:/var/log/nginx    
+    networks:
+      - jmeter-network
+
+
+networks:
+  jmeter-network:
+    driver: bridge
+
+# docker inspect --format '{{.Name}}-{{range .NetworkSettings.Networks}} {{.IPAddress}} {{end}}' $(docker ps -aq) | grep "jmeter"
