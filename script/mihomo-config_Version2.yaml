@@ -1,0 +1,153 @@
+mixed-port: 7890      # 混合端口 HTTP(S) 和 SOCKS
+allow-lan: true       # 允许局域网连接
+bind-address: '*'     # 监听地址
+mode: rule            # 规则模式
+log-level: info       # 日志级别
+ipv6: true          # IPv6 支持
+external-controller: 127.0.0.1:9090  # 外部控制器地址
+
+# 实验性功能
+experimental:
+  ignore-resolve-fail: true
+
+# 开启 geodata 模式
+profile:
+  store-selected: true        # 存储选择
+  store-fake-ip: true        # 存储 fake-ip
+
+geodata-mode: true           # 启用 geodata 模式
+tcp-concurrent: true         # TCP 并发连接
+
+# geo 数据库设置
+geo-auto-update: true        # 自动更新 geo 数据库
+geo-update-interval: 24      # 更新间隔(小时)
+
+geox-url:
+  geoip: "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat"
+  geosite: "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
+  mmdb: "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/Country.mmdb"
+
+# DNS 设置
+dns:
+  enable: true
+  listen: 0.0.0.0:53
+  enhanced-mode: redir-host  # redir-host 模式对 geodata 支持更好
+  nameserver:
+    - 223.5.5.5      # 阿里DNS
+    - 119.29.29.29   # 腾讯DNS
+  fallback:
+    - 1.1.1.1        # Cloudflare DNS
+    - 8.8.8.8        # Google DNS
+  fallback-filter:
+    geoip: true
+    geoip-code: CN
+    ipcidr:
+      - 240.0.0.0/4
+      - 0.0.0.0/32
+
+# 订阅地址
+proxy-providers:
+  provider1:
+    type: http
+    url: "https://raw.githubusercontent.com/Jsnzkpg/Jsnzkpg/Jsnzkpg/Jsnzkpg"
+    interval: 1440    # 更新间隔（秒）
+    path: ./provider1.yaml
+    health-check:
+      enable: true
+      interval: 600
+      url: http://www.gstatic.com/generate_204
+
+  provider2:
+    type: http
+    url: "https://raw.githubusercontent.com/ts-sf/fly/main/clash"
+    interval: 1440
+    path: ./provider2.yaml
+    health-check:
+      enable: true
+      interval: 600
+      url: http://www.gstatic.com/generate_204
+  
+  provider3:
+    type: http
+    url: "https://raw.githubusercontent.com/snakem982/proxypool/main/source/clash-meta.yaml"
+    interval: 1440   
+    path: ./provider3.yaml
+    health-check:
+      enable: true
+      interval: 600
+      url: http://www.gstatic.com/generate_204
+
+# 策略组
+proxy-groups:
+  - name: "🚀 节点选择"
+    type: select
+    proxies:
+      - ♻️ 自动选择
+      - DIRECT
+    use:
+      - provider1
+      - provider2
+      - provider3
+
+  - name: "♻️ 自动选择"
+    type: url-test
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+    tolerance: 50
+    use:
+      - provider1
+      - provider2
+      - provider3
+
+  - name: "📲 电报信息"
+    type: select
+    proxies:
+      - 🚀 节点选择
+      - ♻️ 自动选择
+
+  - name: "🎬 国外媒体"
+    type: select
+    proxies:
+      - 🚀 节点选择
+      - ♻️ 自动选择
+      - DIRECT
+
+  - name: "🎯 全球直连"
+    type: select
+    proxies:
+      - DIRECT
+      - 🚀 节点选择
+
+  - name: "🛑 广告拦截"
+    type: select
+    proxies:
+      - REJECT
+      - DIRECT
+
+# 规则
+rules:
+  # 广告拦截
+  - GEOSITE,category-ads-all,🛑 广告拦截
+  
+  # Telegram 规则
+  - GEOSITE,telegram,📲 电报信息
+  - GEOIP,telegram,📲 电报信息
+  
+  # Google 规则
+  - GEOSITE,google,🚀 节点选择
+  
+  # 国外媒体
+  - GEOSITE,netflix,🎬 国外媒体
+  - GEOSITE,disney,🎬 国外媒体
+  - GEOSITE,youtube,🎬 国外媒体
+  
+  # 直连规则
+  - GEOSITE,category-games@cn,🎯 全球直连
+  - GEOSITE,cn,🎯 全球直连
+  - GEOIP,CN,🎯 全球直连
+  
+  # 代理规则
+  - GEOSITE,geolocation-!cn,🚀 节点选择
+  
+  # 最终规则
+  - MATCH,🚀 节点选择
