@@ -95,19 +95,19 @@ NodeParam: &NodeParam {type: http, interval: 86400, health-check: {enable: true,
 # 订阅合集
 proxy-providers:
   Node-1:
-    url: 'https://d.zrf.me/vless-all'
+    url: 'https://raw.githubusercontent.com/qianlima8888/autoClashProxy/refs/heads/main/list.yaml'
     <<: *NodeParam
     path: './proxy_provider/providers-1.yaml'
     override:
       additional-prefix: "[A] "
   Node-2:
-    url: 'https://raw.githubusercontent.com/Jsnzkpg/Jsnzkpg/Jsnzkpg/Jsnzkpg'
+    url: ''
     <<: *NodeParam
     path: './proxy_provider/providers-2.yaml'
     override:
       additional-prefix: "[B] "
   Node-3:
-    url: 'https://raw.githubusercontent.com/ts-sf/fly/main/clash'
+    url: ''
     <<: *NodeParam
     path: './proxy_provider/providers-3.yaml'
     override:
